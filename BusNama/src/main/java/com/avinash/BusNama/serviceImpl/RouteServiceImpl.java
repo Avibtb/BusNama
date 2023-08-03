@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class RouteServiceImpl implements RouteService {
@@ -50,21 +51,48 @@ public class RouteServiceImpl implements RouteService {
 
     @Override
     public List<Route> viewAllRoute() throws RouteException {
-       return null;
+      List<Route> routes = routeRepository.findAll();
+      if(routes.isEmpty()){
+          throw new RouteException("No route available!");
+      }else
+          return routes;
     }
 
     @Override
     public Route viewRoute(int routeId) throws RouteException {
-        return null;
+        Optional<Route> route = routeRepository.findById(routeId);
+        return route.orElseThrow( () -> new RouteException("There is no route present of this routId: "+ routeId));
     }
 
     @Override
     public Route updateRoute(Route route, String key) throws RouteException, AdminException {
-        return null;
+        CurrentAdminSession loggedInAdmin = currentAdminSessionRepository.findByaid(key);
+        if (loggedInAdmin == null){
+            throw new AdminException("Please provide a valid id to add route!");
+        }
+        Optional<Route> existedRoute = routeRepository.findById(route.getRouteID());
+        if(existedRoute.isPresent()){
+            Route presentRoute = existedRoute.get();
+            List<Bus> busList = presentRoute.getBusList();
+            if(!busList.isEmpty()) throw new RouteException("Cannot update running route! Buses are already scheduled in the route.");
+            return  routeRepository.save(route);
+        }else
+            throw new RouteException("Route doesn't exist of this routeId: "+ route.getRouteID());
     }
 
     @Override
     public Route deleteRoute(int routeID, String key) throws RouteException, AdminException {
-        return null;
+        CurrentAdminSession loggedInAdmin = currentAdminSessionRepository.findByaid(key);
+        if(loggedInAdmin == null){
+            throw new AdminException("Please provide a valid id to add route !");
+        }
+        Optional<Route> route = routeRepository.findById(routeID);
+        if(route.isPresent()){
+            Route existingRoute = route.get();
+            routeRepository.delete(existingRoute);
+            return existingRoute;
+        }else
+            throw new RouteException("There is no route of this routeId: "+routeID);
+
     }
 }
