@@ -88,6 +88,15 @@ public class FeedBackServiceImpl implements FeedBackService {
     }
 
     @Override
+    public Feedback viewFeedBack(Integer id) throws FeedBackException {
+        Optional<Feedback> optional = feedbackRepository.findById(id);
+        if(optional.isPresent()){
+            return optional.get();
+        }
+        throw new FeedBackException(("No Feedback found!"));
+    }
+
+    @Override
     public List<Feedback> viewFeedbackAll() throws FeedBackException {
        Optional<List<Feedback>> feedbackList = Optional.of(feedbackRepository.findAll());
        if (feedbackList.isPresent()){
